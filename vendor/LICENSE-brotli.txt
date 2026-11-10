@@ -1,0 +1,3 @@
+brotli.min.js is a browser build of the decoder from the "brotli" npm package
+(https://github.com/foliojs/brotli.js), a JavaScript port of Google's Brotli
+decoder. MIT License, Copyright (c) 2015 Devon Govett and the Brotli authors (Google Inc.).

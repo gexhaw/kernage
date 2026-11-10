@@ -1,0 +1,6 @@
+playwright>=1.40
+opentype-sanitizer>=9
+fonttools>=4.40
+uharfbuzz>=0.37
+freetype-py>=2.4
+brotli>=1.0

@@ -1,0 +1,991 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kernage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>/*FONTS*/</style>
+<style>
+/* Layout: a drafting table — tool rails and panels framing a pale film canvas where letters are cut. */
+:root{
+  --bg:#E4E8EE; --panel:#F3F5F8; --panel2:#FBFCFD; --line:#CBD2DC; --ink:#131722; --mute:#5B6577;
+  --accent:#2D43D2; --accent-ink:#FFFFFF; --accent-soft:rgba(45,67,210,.10);
+  --neg:#C0175A; --pos:#0C8670; --m1:#E0464E; --m2:#E3A008; --m3:#22A06B; --m4:#3B6FE0; --guide:#97A3B6; --canvas:#FCFDFE; --grid:rgba(30,45,90,.06); --grid2:rgba(30,45,90,.12);
+  --f-display:'Unbounded','Golos Text',system-ui,sans-serif;
+  --f-ui:'Golos Text',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0D1015; --panel:#141920; --panel2:#1A2029; --line:#2A323E; --ink:#E6EAF1; --mute:#8C97A8;
+  --accent:#8C9BFF; --accent-ink:#0D1015; --accent-soft:rgba(140,155,255,.14);
+  --neg:#FF6FA6; --pos:#4FD3B4; --m1:#FF6B70; --m2:#F5C04A; --m3:#4CD19A; --m4:#7EA2FF; --guide:#4F5B6C; --canvas:#10141A; --grid:rgba(160,175,220,.05); --grid2:rgba(160,175,220,.10); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0D1015; --panel:#141920; --panel2:#1A2029; --line:#2A323E; --ink:#E6EAF1; --mute:#8C97A8;
+  --accent:#8C9BFF; --accent-ink:#0D1015; --accent-soft:rgba(140,155,255,.14);
+  --neg:#FF6FA6; --pos:#4FD3B4; --m1:#FF6B70; --m2:#F5C04A; --m3:#4CD19A; --m4:#7EA2FF; --guide:#4F5B6C; --canvas:#10141A; --grid:rgba(160,175,220,.05); --grid2:rgba(160,175,220,.10); color-scheme:dark }
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.4 var(--f-ui);overflow:hidden;touch-action:manipulation}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr);min-height:0}
+/* header */
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.logo{font:700 17px/1 var(--f-display);letter-spacing:.01em;display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.logo small{font:500 10px/1 var(--f-mono);color:var(--mute);letter-spacing:.08em;text-transform:uppercase}
+.fname{border:1px solid transparent;background:transparent;border-radius:var(--r);padding:5px 8px;font-weight:600;min-width:0;width:12ch}
+.fname:hover{border-color:var(--line)} .fname:focus{border-color:var(--accent);background:var(--panel2)}
+.tabs{min-width:0;display:flex;gap:2px;background:var(--bg);padding:3px;border-radius:8px;overflow-x:auto;max-width:100%}
+.tab{border:0;background:transparent;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--mute);font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--ink)} .tab[aria-selected="true"]{background:var(--panel2);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+.bar .sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel2);padding:6px 11px;border-radius:var(--r);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--mute)} .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.sm{padding:3px 8px;font-size:12px} .btn.ghost{background:transparent} .btn[data-armed]{border-color:var(--neg);color:var(--neg)}
+.btn:disabled{opacity:.45;cursor:default}
+main{position:relative;min-height:0}
+.view{position:absolute;inset:0;overflow:auto}
+.pad{padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h2{font:500 13px/1.2 var(--f-display);letter-spacing:.02em;margin:0}
+.lbl{font:500 10.5px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+input[type=text],input[type=number],select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:5px 8px;min-width:0}
+input[type=number]{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+input[type=range]{accent-color:var(--accent);width:100%}
+input[type=checkbox]{accent-color:var(--accent)}
+.chk{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+/* glyph grid */
+.gtool{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:4px 11px;cursor:pointer;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stat{color:var(--mute);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.gcard{position:relative;border:1px solid var(--line);background:var(--canvas);border-radius:var(--r);padding:0;cursor:pointer;display:flex;flex-direction:column;overflow:hidden}
+.gcard canvas{width:100%;aspect-ratio:1;display:block}
+.gcard:hover{border-color:var(--mute)} .gcard.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.gmeta{display:flex;justify-content:space-between;align-items:baseline;padding:3px 6px 4px;border-top:1px solid var(--line);background:var(--panel);font-size:12px}
+.gmeta i{font:normal 9.5px var(--f-mono);color:var(--mute)}
+.gcard.empty .gmeta b{color:var(--mute);font-weight:400}
+.gcard.empty::after{content:"";position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;border:1.5px solid var(--guide)}
+.note{font-size:13px;color:var(--mute);max-width:70ch}
+/* editor */
+.ed{display:grid;grid-template-columns:48px minmax(0,1fr) 296px;height:100%;min-height:0}
+.rail{display:flex;flex-direction:column;gap:4px;padding:10px 6px;background:var(--panel);border-right:1px solid var(--line)}
+.tool{width:36px;height:36px;border:1px solid transparent;border-radius:var(--r);background:transparent;cursor:pointer;display:grid;place-items:center;position:relative}
+.tool:hover{background:var(--bg)} .tool[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tool svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tool kbd{position:absolute;right:2px;bottom:1px;font:9px var(--f-mono);opacity:.6}
+.stage{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-width:0;min-height:0}
+.strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+.strip .cur-g{font:600 18px/1 var(--f-ui);min-width:1.4em;text-align:center}
+.strip input[type=text]{width:10ch}
+.cwrap{position:relative;min-height:0;background:var(--canvas);overflow:hidden;touch-action:none}
+.cwrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.status{display:flex;gap:16px;flex-wrap:wrap;padding:4px 10px;font:11px var(--f-mono);color:var(--mute);background:var(--panel);border-top:1px solid var(--line)}
+.side{background:var(--panel);border-left:1px solid var(--line);overflow:auto;min-width:0}
+.side details{border-bottom:1px solid var(--line)}
+.side summary{list-style:none;cursor:pointer;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.side summary::-webkit-details-marker{display:none}
+.side summary::after{content:"";width:6px;height:6px;border-right:1.5px solid var(--mute);border-bottom:1.5px solid var(--mute);transform:rotate(45deg);margin-top:-3px}
+.side details[open] summary::after{transform:rotate(-135deg);margin-top:3px}
+.sbody{padding:0 14px 14px;display:grid;gap:9px}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.fld{display:grid;gap:3px;min-width:0} .fld input,.fld select{width:100%}
+.btns{display:flex;flex-wrap:wrap;gap:5px}
+.ginfo{display:grid;grid-template-columns:64px minmax(0,1fr);gap:4px 12px;align-items:center}
+.ginfo .big{grid-row:span 4;font:500 44px/1 var(--f-ui);width:64px;height:64px;display:grid;place-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--canvas)}
+.hint{font-size:12px;color:var(--mute)}
+/* kerning */
+.kv{display:grid;grid-template-columns:250px minmax(0,1fr) 300px;height:100%;min-height:0}
+.klist{display:grid;grid-template-rows:auto minmax(0,1fr);border-right:1px solid var(--line);background:var(--panel);min-height:0}
+.khead{padding:12px;display:grid;gap:8px;border-bottom:1px solid var(--line)}
+.krows{overflow:auto;min-height:0}
+.krow{display:grid;grid-template-columns:1fr auto 22px;align-items:center;gap:8px;width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:6px 12px;cursor:pointer;text-align:left}
+.krow:hover{background:var(--bg)} .krow.on{background:var(--accent-soft)}
+.krow .pr{font-size:17px;letter-spacing:.02em}
+.krow .val{font:12px var(--f-mono);font-variant-numeric:tabular-nums}
+.val.n{color:var(--neg)} .val.p{color:var(--pos)}
+.krow .x{border:0;background:transparent;color:var(--mute);cursor:pointer;padding:0;font-size:15px}
+.kmain{display:grid;grid-template-rows:minmax(220px,1.2fr) auto minmax(160px,1fr);min-width:0;min-height:0}
+.kstage{position:relative;background:var(--canvas);border-bottom:1px solid var(--line);touch-action:none;cursor:ew-resize;min-height:0}
+.kstage canvas,.ktest canvas{position:absolute;inset:0;width:100%;height:100%}
+.kctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.kctl .kval{font:500 22px/1 var(--f-mono);min-width:4.5ch;text-align:right;font-variant-numeric:tabular-nums}
+.kctl input[type=range]{flex:1;min-width:140px}
+.kpair{display:flex;gap:4px;align-items:center}
+.kpair input{width:3.2em;text-align:center;font-size:16px}
+.ktestw{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0}
+.ktbar{display:flex;gap:8px;padding:8px 14px;align-items:center;flex-wrap:wrap;background:var(--panel);border-bottom:1px solid var(--line)}
+.ktbar input[type=text]{flex:1;min-width:160px}
+.ktest{position:relative;background:var(--canvas);cursor:pointer;min-height:0}
+/* preview */
+.pv{display:grid;gap:18px;max-width:1200px}
+.pctl{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:end;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.pctl .fld{min-width:140px}
+.proof{font-family:var(--live,'Golos Text'),'Golos Text',sans-serif;background:var(--canvas);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;min-height:180px}
+.proof:focus{border-color:var(--accent)}
+.wf{display:grid;gap:4px;background:var(--canvas);border:1px solid var(--line);border-radius:var(--r);padding:12px 20px;overflow:hidden}
+.wf div{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:baseline;gap:12px}
+.wf span:last-child{font-family:var(--live,'Golos Text'),'Golos Text',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.chart{font-family:var(--live,'Golos Text'),'Golos Text',sans-serif;font-size:40px;line-height:1.35;background:var(--canvas);border:1px solid var(--line);border-radius:var(--r);padding:14px 20px;overflow-wrap:anywhere;letter-spacing:.06em}
+.livestat{font:12px var(--f-mono);color:var(--mute)}
+.livestat.err{color:var(--neg)}
+/* font info */
+.fi{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;max-width:1100px}
+.card>*{min-width:0}
+.card{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;align-content:start}
+.mdiag{display:block;width:100%;height:auto;max-width:100%;border-radius:4px}
+/* destruction */
+.tab-fx{position:relative}
+.tab-fx::after{content:"";position:absolute;top:6px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--neg)}
+.fxv{display:grid;grid-template-columns:minmax(0,1fr) 220px 300px;height:100%;min-height:0}
+.fxmain{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-width:0;min-height:0}
+.fxstage{position:relative;background:var(--canvas);min-height:0;overflow:hidden;cursor:zoom-in;touch-action:none}
+.fxstage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fxfoot{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);font-size:13px}
+.fxgrid{overflow:auto;border-left:1px solid var(--line);background:var(--panel);display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:4px;padding:8px;align-content:start;min-height:0}
+.fxcell{border:1px solid var(--line);background:var(--canvas);border-radius:4px;padding:0;cursor:pointer}
+.fxcell canvas{width:100%;aspect-ratio:1;display:block}
+.fxcell:hover{border-color:var(--mute)} .fxcell.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.fxside{display:flex;flex-direction:column}
+.fxtop{padding-top:14px;border-bottom:1px solid var(--line)}
+.fxexp{padding-top:14px;border-top:1px solid var(--line);margin-top:auto;position:sticky;bottom:0;background:var(--panel)}
+.fxlist{gap:8px}
+.fxrow{display:grid;gap:1px}
+.fxl{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;user-select:none;cursor:default}
+.fxl output{font:11px var(--f-mono);color:var(--mute);font-variant-numeric:tabular-nums}
+.fxrow.on .fxl span{color:var(--neg);font-weight:600} .fxrow.on .fxl output{color:var(--ink)}
+.fxrow.on input[type=range]{accent-color:var(--neg)}
+.fxcount{font-size:11px;color:var(--neg);margin-left:auto;margin-right:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:5px 11px;cursor:pointer;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,10px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;z-index:50;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.banner{position:fixed;left:0;right:0;top:0;z-index:60;background:var(--neg);color:var(--canvas);padding-block:6px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:13px}
+/* added tools */
+.savest{font:11px var(--f-mono);color:var(--mute);white-space:nowrap}
+.savest.fail{color:var(--neg)}
+.hbtn{width:32px;padding:6px 0;justify-content:center;font-weight:600}
+.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab .ti{display:none}
+.mob{display:none!important}
+.railsp{flex:1}
+.cfloat{position:absolute;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;box-shadow:0 4px 18px rgba(0,0,0,.12);font-size:13px;z-index:3}
+.cf-top{left:10px;top:10px;max-width:calc(100% - 20px)}
+.cf-top input[type=range]{width:140px}
+.cf-bot{right:10px;bottom:10px}
+.marks{display:flex;gap:6px;align-items:center}
+.marks .lbl{margin-right:4px}
+.marks button{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--canvas);cursor:pointer;font-size:12px;color:var(--mute);padding:0}
+.marks button[data-m="1"]{background:var(--m1)} .marks button[data-m="2"]{background:var(--m2)} .marks button[data-m="3"]{background:var(--m3)} .marks button[data-m="4"]{background:var(--m4)}
+.marks button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:2px}
+.gcard[data-mark]::before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--mk);z-index:1}
+.gcard[data-mark="1"]{--mk:var(--m1)} .gcard[data-mark="2"]{--mk:var(--m2)} .gcard[data-mark="3"]{--mk:var(--m3)} .gcard[data-mark="4"]{--mk:var(--m4)}
+.gcard.comp .gmeta i::after{content:" ⧉"}
+.compinfo{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;background:var(--bg);border-radius:6px;padding:6px 8px}
+.nudgerow{display:flex;gap:14px;align-items:end}
+.nudge{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,30px);gap:3px}
+.nudge button{border:1px solid var(--line);background:var(--panel2);border-radius:6px;cursor:pointer;font-size:15px}
+.nudge [data-nd="0,1"]{grid-column:2;grid-row:1} .nudge [data-nd="-1,0"]{grid-column:1;grid-row:2} .nudge [data-nd="1,0"]{grid-column:3;grid-row:2} .nudge [data-nd="0,-1"]{grid-column:2;grid-row:3}
+.nudgerow .fld{width:5.5em}
+.aln .btn{flex:1 1 30%}
+.chk-out{margin:0;white-space:pre-line}
+.colr{display:grid;gap:3px}
+.colr input{width:44px;height:30px;padding:2px;border:1px solid var(--line);border-radius:6px;background:var(--panel2)}
+.plist{display:grid;gap:6px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel2)}
+.prow.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.prow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow small{color:var(--mute);font:11px var(--f-mono)}
+.fam{gap:4px 14px}
+.modal{position:fixed;inset:0;z-index:80;background:rgba(8,10,16,.5);display:grid;place-items:center;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mbox{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;width:100%;max-width:640px;max-height:min(84vh,760px);overflow:auto;padding:18px 20px;display:grid;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.mhead{display:flex;justify-content:space-between;align-items:center}
+.mhead h2{font-size:15px}
+.cgroups{display:grid;gap:8px}
+.markrow{font-size:26px;letter-spacing:.12em;color:var(--ink);white-space:nowrap}
+.cgroup{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel2)}
+.cgroup .chars{font-size:18px;letter-spacing:.06em;margin-top:4px;overflow-wrap:anywhere;color:var(--mute)}
+.cgroup .chars b{color:var(--ink);font-weight:500}
+.helpg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.helpg h3{font:500 12px var(--f-display);margin:0 0 8px;letter-spacing:.02em}
+.helpg dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;margin:0;font-size:13px}
+.helpg dt{font:12px var(--f-mono);color:var(--accent)}
+.helpg dd{margin:0}
+.sheethead{display:none}
+.cf-botl{left:10px;bottom:10px;max-width:calc(100% - 20px);gap:6px;padding:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.cf-botl>*{flex:none}
+.pvfeat{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center}
+.grid{grid-template-columns:repeat(auto-fill,minmax(var(--gmin,84px),1fr))}
+@media (max-width:980px) and (max-height:540px) and (orientation:landscape){
+  :root{--tb:40px;--sheet-h:78vh}
+  .tab{flex-direction:row;padding:5px 0;gap:0} .tab span{display:none} .tab-fx::after{top:6px}
+  .bar{padding-block:3px} .bar .btn,.langsel{padding-block:4px}
+  .status{display:none} .strip{padding-block:3px} .tool{width:36px;height:36px} .rail{padding-block:3px}
+  .kmain{grid-template-rows:minmax(110px,1fr) auto minmax(90px,1fr)}
+}
+.ksrc{font:11px var(--f-mono);color:var(--mute);white-space:nowrap} .ksrc.group{color:var(--accent)} .ksrc.exception{color:var(--neg)}
+.krow.grp .pr{color:var(--accent)}
+textarea{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;font:13px/1.5 var(--f-ui);resize:vertical;width:100%;min-width:0}
+.langsel{padding:5px 6px;font:500 12px var(--f-mono);border-radius:var(--r)}
+.cwrap,.fxstage,.kstage,.ktest{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+@media (max-width:980px){
+  :root{--tb:64px;--sheet-h:min(52vh,460px)}
+  body{overflow:hidden;overscroll-behavior:none}
+  .app{padding-bottom:var(--tb)}
+  input[type=text],input[type=number],select,textarea,.proof{font-size:16px}
+  input[type=range]{height:30px}
+  .btn.sm{min-height:34px;padding:6px 10px;font-size:13px}
+  .mob{display:inline-flex!important}
+  .tool.mob{display:grid!important}
+  .bar{flex-wrap:nowrap;gap:8px;padding-block:6px}
+  .logo{font-size:15px} .logo small,.savest,.deskhint{display:none}
+  .fname{flex:1;width:auto;min-width:0}
+  .bar .sp{display:none}
+  #bExport .xl{display:none} #bExport{padding:7px 10px}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:45;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;border-radius:0;background:var(--panel);border-top:1px solid var(--line);padding-top:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px));padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px));overflow:visible;max-width:none}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 5px;font-size:10.5px;border-radius:8px;min-width:0}
+  .tab span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .tab .ti{display:block;width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .tab[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);box-shadow:none}
+  .tab-fx::after{top:4px;right:calc(50% - 16px)}
+  .toast{bottom:calc(var(--tb) + 14px + env(safe-area-inset-bottom,0px))}
+  .view.sheet-open{bottom:var(--sheet-h)}
+  .sheet{position:fixed;left:0;right:0;bottom:calc(var(--tb) + env(safe-area-inset-bottom,0px));height:var(--sheet-h);z-index:40;background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.18);overflow:auto;overscroll-behavior:contain;transform:translateY(calc(100% + var(--tb) + 40px));visibility:hidden;transition:transform .24s ease,visibility 0s linear .24s;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  .sheet.open{transform:none;visibility:visible;transition:transform .24s ease}
+  .sheethead{display:flex;position:sticky;top:0;z-index:4;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px 8px;background:var(--panel);border-bottom:1px solid var(--line);touch-action:none}
+  .sheethead::before{content:"";position:absolute;left:50%;top:5px;width:38px;height:4px;border-radius:2px;background:var(--line);transform:translateX(-50%)}
+  .sheethead b{font:500 13px var(--f-display)}
+  .ed{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);height:100%}
+  .rail{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:5px max(8px,env(safe-area-inset-left,0px));gap:2px;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .tool{width:40px;height:40px;flex:none} .tool kbd{display:none}
+  .railsp{flex:1;min-width:6px}
+  .stage{min-height:0}
+  .strip{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .strip>*{flex:none}
+  .status{gap:10px}
+  .cf-top input[type=range]{width:110px}
+  .kv{grid-template-columns:minmax(0,1fr);height:100%}
+  .klist.sheet{display:flex;flex-direction:column;border-right:0}
+  .klist.sheet .krows{flex:1;max-height:none}
+  .kmain{grid-template-rows:minmax(140px,1fr) auto minmax(120px,1fr);height:100%}
+  .kctl{gap:6px;padding:8px 10px}
+  .kctl input[type=range]{min-width:100%;order:9}
+  .kctl .kval{font-size:18px}
+  .ktbar{flex-wrap:nowrap;overflow-x:auto} .ktbar>*{flex:none} .ktbar input[type=text]{min-width:180px}
+  .fxv{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;height:100%}
+  .fxfoot{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none} .fxfoot>*{flex:none}
+  .fxgrid{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:54px;overflow-x:auto;overflow-y:hidden;border-left:0;border-top:1px solid var(--line);padding:6px 8px}
+  .fxside.sheet{display:block}
+  .fxexp{position:static;margin-top:0}
+  .grid{gap:5px}
+  .gtool{gap:8px}
+  .gtool #gsearch{flex:1;min-width:150px}
+  .pctl .fld{min-width:120px;flex:1}
+  .mbox{max-height:calc(100% - 20px)}
+  .strip .mob,.ktbar .mob{order:-1}
+  .helpg dl{grid-template-columns:minmax(0,1fr);gap:2px}
+  .helpg dd{margin-bottom:8px}
+  .modal{place-items:end center;padding-block:10px}
+}
+
+/* ---- polish v2 ---- */
+:root{--r:8px;--sh1:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.06);--sh2:0 6px 18px rgba(16,24,40,.10)}
+:root[data-theme="dark"]{--sh1:0 1px 2px rgba(0,0,0,.4);--sh2:0 8px 24px rgba(0,0,0,.45)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--sh1:0 1px 2px rgba(0,0,0,.4);--sh2:0 8px 24px rgba(0,0,0,.45)}}
+html{-webkit-tap-highlight-color:transparent}
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+::-webkit-scrollbar{width:10px;height:10px} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;border:3px solid transparent;background-clip:padding-box} ::-webkit-scrollbar-track{background:transparent}
+.bar{box-shadow:var(--sh1);position:relative;z-index:6}
+.btn,.chip,.tab,.tool,.seg button,.gcard,.fxcell,.krow,.prow{transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s,transform .12s}
+.btn:active:not(:disabled),.chip:active,.tool:active,.gcard:active,.fxcell:active{transform:scale(.97)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn .ico{flex:none}
+.tab:hover:not([aria-selected="true"]){background:var(--accent-soft)}
+.card,.pctl,.proof,.wf,.chart{box-shadow:var(--sh1)}
+.gcard{box-shadow:var(--sh1)} .gcard:hover{box-shadow:var(--sh2);border-color:var(--guide)}
+.chip:hover:not([aria-pressed="true"]){border-color:var(--mute)}
+.gtool{position:sticky;top:-16px;z-index:5;background:var(--bg);margin:-16px 0 12px;padding:16px 0 10px;flex-wrap:wrap;gap:8px 10px}
+.gsrch{display:flex;gap:8px;align-items:center}
+.inico{position:relative;display:inline-flex;align-items:center}
+.inico .ico{position:absolute;left:9px;color:var(--mute);pointer-events:none;width:15px;height:15px}
+.inico input[type=search]{padding-left:30px;width:180px}
+input[type=search]{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:5px 8px;min-width:0;-webkit-appearance:none;appearance:none}
+.gtool .sp{flex:1}
+.gaddw{display:flex;align-items:stretch}
+.gaddw input{width:160px;border-radius:var(--r) 0 0 var(--r);border-right:0}
+.gaddw .btn{border-radius:0 var(--r) var(--r) 0}
+.strip #jump{width:13ch}
+.pv{margin-inline:auto}
+.fi{max-width:1440px;margin-inline:auto;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.fxfoot{flex-wrap:nowrap;overflow-x:auto;gap:8px 14px;scrollbar-width:none} .fxfoot>*{flex:none} .fxfoot::-webkit-scrollbar{display:none}
+.gempty{display:grid;justify-items:center;gap:12px;color:var(--mute);text-align:center;padding:48px 16px;border:1px dashed var(--line);border-radius:var(--r)}
+#bTheme .ico{width:17px;height:17px}
+@media (max-width:1600px) and (min-width:981px){ .gaddw .btn span{display:none} .gaddw .btn{padding-inline:10px} }
+@media (max-width:980px){
+  .gtool{top:-16px;padding:12px 0 8px;margin-top:-16px;gap:8px}
+  .chips{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;padding:6px 13px}
+  .gsrch{flex:1 1 100%}
+  .gsrch .inico{flex:1;min-width:0} .inico input[type=search]{width:100%} .gtool #gsearch{min-width:0} .gsrch select{flex:0 1 auto;max-width:34%}
+  .gtool .sp{display:none}
+  .gaddw{flex:1 1 200px;min-width:0} .gaddw input{flex:1;width:auto;min-width:0}
+  .gaddw .btn span{display:none} .gaddw .btn{padding-inline:12px}
+  .pctl:not(.open)>:not(.keep){display:none!important}
+  .pctl{gap:10px 14px}
+  .bar{gap:6px} .hbtn{width:34px}
+  .btn:active:not(:disabled){transform:scale(.95)}
+}
+@media (max-width:380px){ .logo{display:none} .tab{font-size:10px;letter-spacing:-.02em} .tabs{padding-left:max(2px,env(safe-area-inset-left,0px));padding-right:max(2px,env(safe-area-inset-right,0px))} }
+.onb{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--sh1);display:grid;gap:10px}
+.onbt{display:flex;justify-content:space-between;align-items:center}.onbt b{font:500 14px var(--f-display)}
+.onb ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px}
+.onb li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start;font-size:13px;color:var(--mute)}
+.onb li b{color:var(--ink);font-weight:600}
+.onbn{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:600 12px var(--f-mono)}
+.reflist{display:grid;gap:6px}
+.refrow{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto auto auto;gap:5px;align-items:center}
+.refrow b{font-size:18px;min-width:1.6em;text-align:center}
+.refrow input{width:100%}
+.pal{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pal button{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);cursor:pointer;padding:0;font-size:12px;color:var(--mute);background:var(--canvas)}
+.pal button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:2px}
+.pal input[type=color]{width:34px;height:28px;padding:1px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.problist{display:grid;gap:2px;max-height:280px;overflow:auto}
+.prob{display:grid;grid-template-columns:3.2em 1fr auto;gap:8px;align-items:center;padding:5px 6px;border-radius:6px;border:0;background:transparent;text-align:left;cursor:pointer;font-size:13px}
+.prob:hover{background:var(--bg)} .prob b{font-size:17px;font-weight:500}
+.prob .d{font:11px var(--f-mono);color:var(--mute)}
+.otrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.otrow p{margin:4px 0 0}
+.mbox.wide{max-width:980px}
+.poster{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}
+.pform{display:grid;gap:10px}
+.pview{background:var(--bg);border-radius:10px;padding:10px;display:grid;place-items:center;min-height:300px}
+.pview canvas{max-width:100%;max-height:62vh;box-shadow:var(--sh2);border-radius:4px}
+.vlist{display:grid;gap:6px;max-height:260px;overflow:auto}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.vrow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.vrow small{color:var(--mute);font:11px var(--f-mono)}
+@media (max-width:980px){ .poster{grid-template-columns:minmax(0,1fr)} .deskonly{display:none!important} }
+#layerSeg button{padding:4px 9px}
+.bulk{position:sticky;bottom:0;z-index:6;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--sh2);display:grid;gap:8px}
+.bulkh{display:flex;align-items:center;gap:8px}.bulkh b{font:600 15px var(--f-display)}
+.bulkr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}.bulkr input{width:5.2em}
+.gcard.sel{outline:3px solid var(--accent);outline-offset:-1px}
+.gcard.sel::after{content:'✓';position:absolute;top:4px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font:600 12px/20px var(--f-ui);text-align:center}
+#bSelMode[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.anrow{display:grid;grid-template-columns:5.5em minmax(0,1fr) minmax(0,1fr) auto;gap:5px;align-items:center}
+.anrow b{font:500 12px var(--f-mono)}
+#caltText{width:100%;min-height:84px;font:13px var(--f-mono);background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:8px;resize:vertical;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#bootwarn{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:9999;background:#B3261E;color:#fff;padding:12px 14px;border-radius:10px;font:500 14px/1.4 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3)}#bootwarn span{opacity:.85;font-size:12px}#booterr{margin-top:6px;font:12px/1.35 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word}#booterr:empty{display:none}
+
+/* v4: larger UI */
+body{font-size:15px}
+.lbl{font-size:11.5px} h2{font-size:14px} .logo{font-size:18px} .logo small{font-size:11px}
+.btn{padding:7px 12px} .btn.sm{font-size:13px;padding:4px 9px}
+.chip{font-size:14px;padding:5px 12px} .stat,.note,.fxfoot,.fxl,.compinfo,.prob,.helpg dl,.onb li,.toast{font-size:14px}
+.hint,.gmeta{font-size:13px} .gmeta i{font-size:10.5px} .status,.savest,.fxl output,.prow small,.vrow small,.ksrc,.prob .d{font-size:12px}
+.krow .val,.livestat,.helpg dt{font-size:13px} .helpg h3{font-size:13px} .anrow b{font-size:13px}
+.tool{width:40px;height:40px} .tool svg{width:21px;height:21px} .tool kbd{font-size:10px}
+.ico{width:18px;height:18px} #bTheme .ico{width:19px;height:19px} .inico .ico{width:17px;height:17px}
+.marks button{width:27px;height:27px;font-size:13px} .pal button{width:31px;height:31px}
+.strip .cur-g{font-size:20px} .langsel{font-size:13px} textarea{font-size:14px} #caltText{font-size:14px}
+@media (max-width:980px){
+  .tab{font-size:11.5px} .tab .ti{width:24px;height:24px}
+  .tool{width:44px;height:44px} .tool svg{width:23px;height:23px}
+  .btn.sm{font-size:14px;min-height:36px} .sheethead b{font-size:15px} .logo{font-size:16px}
+}
+@media (max-width:380px){ .tab{font-size:10.5px} .tab .ti{width:22px;height:22px} }
+.row2 .btn{justify-content:center;padding-inline:8px;min-width:0;white-space:normal;text-align:center;line-height:1.2}
+@media (max-width:440px){ .tab{font-size:11px;letter-spacing:-.015em} }
+@media (max-width:380px){ .tab{font-size:10px} }
+
+.onbb{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.mbox.tour{max-width:900px;gap:10px}
+.tfig{position:relative;margin:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#E9EBF1;aspect-ratio:16/10;touch-action:pan-y;user-select:none}
+.tfig img{display:block;width:100%;height:100%;object-fit:contain}
+.tnav{position:absolute;top:50%;transform:translateY(-50%);left:10px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.15);opacity:.92}
+.tnav.nx{left:auto;right:10px} .tnav:disabled{opacity:0;pointer-events:none}
+.ttext{display:grid;gap:4px} .ttext b{font:600 19px/1.25 var(--f-display)} .ttext p{margin:0;color:var(--mute);font-size:15px;line-height:1.5;min-height:3em}
+.tnum{font:500 12px var(--f-mono);color:var(--accent);letter-spacing:.06em}
+.tfoot{display:flex;align-items:center;gap:8px} .tdots{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.tdots button{width:9px;height:9px;border-radius:50%;border:0;padding:0;background:var(--line);cursor:pointer} .tdots button[aria-current=true]{background:var(--accent);width:22px;border-radius:5px}
+@media (max-width:980px){ .tnav{width:38px;height:38px} .ttext b{font-size:17px} .ttext p{font-size:14px} .tdots button{width:8px;height:8px} .tdots{gap:5px} }
+@media (min-width:981px) and (max-width:1439px){ .logo small,.savest{display:none} .tab{padding-inline:9px} .bar{gap:10px} }
+@media (min-width:981px) and (max-width:1199px){ #bExport .xl{display:none} .fname{width:130px} .tab{padding-inline:7px;font-size:14px} }
+@media (max-width:980px){ .onbt{flex-wrap:wrap;gap:8px} .onbb{width:100%;justify-content:space-between} }
+.mbox.tour .tfig{width:min(100%,calc((min(84vh,760px) - 230px) * 1.6));margin-inline:auto}
+@media (max-width:980px){ .mbox.tour .tfig{width:100%} }
+.credits{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:12px;margin-top:4px;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
+.credits .cby{flex:1;min-width:180px} .credits .cby a{color:var(--accent);font-weight:500}
+.credits a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+#credFont{max-width:1100px;margin:18px auto 0}
+.helpg dl{grid-template-columns:minmax(0,42%) minmax(0,1fr)} .helpg dt{white-space:normal;overflow-wrap:anywhere}
+@media (max-width:980px){ .helpg dl{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:980px), (pointer:coarse){
+  #bPrev,#bNext,#kPrevP,#kNextP,#fxPrev,#fxNext,#fxZoomOut,#fxZoomIn{min-width:36px;min-height:36px}
+  #layerSeg button{min-height:36px}
+}
+@media (max-width:980px){ .tfoot{flex-wrap:wrap} .tdots{flex-basis:100%;justify-content:center;margin-bottom:4px} .tfoot .btn{flex:1} }
+@media (pointer:coarse){ .btn.sm{min-height:36px} .bar .btn,.bar select{min-height:34px} .krow .x,.krow button{min-width:32px;min-height:32px} }
+</style>
+
+<div class="app">
+  <div id="bootwarn" role="alert">Kernage did not start. The file seems to be open in a viewer that doesn't run scripts (the Claude app, Telegram, Files). Open it in a browser: Chrome, Safari, Firefox.<br><span lang="ru">Kernage не запустился. Откройте файл в браузере: Chrome, Safari, Firefox.</span><div id="booterr"></div></div>
+  <div class="banner" id="libwarn" hidden>Библиотека шрифтов не загрузилась: рисовать можно, а сборка и экспорт шрифта недоступны. Обновите страницу.</div>
+  <header class="bar">
+    <div class="logo">Kernage <small>type studio</small></div>
+    <input class="fname" id="fname" type="text" aria-label="Название шрифта" spellcheck="false">
+    <span class="savest" id="saveState" role="status"></span>
+    <nav class="tabs" role="tablist">
+      <button class="tab" data-tab="glyphs" role="tab"><svg class="ti" viewBox="0 0 20 20"><path d="M3 3h6v6H3zM11 3h6v6h-6zM3 11h6v6H3zM11 11h6v6h-6z"/></svg><span>Глифы</span></button>
+      <button class="tab" data-tab="editor" role="tab"><svg class="ti" viewBox="0 0 20 20"><path d="M10 2l4.5 8L10 18l-4.5-8z"/><circle cx="10" cy="10" r="1.4"/></svg><span>Редактор</span></button>
+      <button class="tab" data-tab="kern" role="tab"><svg class="ti" viewBox="0 0 20 20"><path d="M3 15l3-10 3 10M4 12h4M11 5l3 10 3-10M7 18h6M7 18l1.5-1.5M7 18l1.5 1.5M13 18l-1.5-1.5M13 18l-1.5 1.5"/></svg><span>Кернинг</span></button>
+      <button class="tab tab-fx" data-tab="fx" role="tab"><svg class="ti" viewBox="0 0 20 20"><path d="M11 2L4 11h5l-1 7 7-9h-5z"/></svg><span>Деструкция</span></button>
+      <button class="tab" data-tab="preview" role="tab"><svg class="ti" viewBox="0 0 20 20"><path d="M2 10s3-5.5 8-5.5S18 10 18 10s-3 5.5-8 5.5S2 10 2 10z"/><circle cx="10" cy="10" r="2.4"/></svg><span>Просмотр</span></button>
+      <button class="tab" data-tab="font" role="tab"><svg class="ti" viewBox="0 0 20 20"><path d="M4 6h12M4 14h12"/><circle cx="8" cy="6" r="1.8"/><circle cx="13" cy="14" r="1.8"/></svg><span>Шрифт</span></button>
+    </nav>
+    <span class="sp"></span>
+    <select id="lang" class="langsel" aria-label="Язык интерфейса"><option value="en">EN</option><option value="ru">RU</option><option value="es">ES</option></select>
+    <button class="btn ghost" id="bInstall" hidden title="Установить Kernage как приложение"><svg class="ico" viewBox="0 0 20 20"><rect x="5" y="2.5" width="10" height="15" rx="2"/><path d="M10 7v6M7.5 10.5L10 13l2.5-2.5"/></svg><span class="xl">Установить</span></button>
+    <button class="btn ghost hbtn" id="bTheme" title="Тема: как в системе" aria-label="Тема: как в системе"><svg class="ico" viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5v13A6.5 6.5 0 0010 3.5z" fill="currentColor"/></svg></button>
+    <button class="btn ghost hbtn" id="bHelp" title="Подсказки и сочетания клавиш" aria-label="Подсказки">?</button>
+    <button class="btn pri" id="bExport" aria-label="Скачать шрифт"><svg class="ico" viewBox="0 0 20 20"><path d="M10 3v10M6 9l4 4 4-4M4 16h12"/></svg><span class="xl">Скачать шрифт</span></button>
+  </header>
+  <main>
+    <!-- GLYPHS -->
+    <section class="view pad" id="v-glyphs">
+      <div class="gtool">
+        <div class="chips" id="chips">
+          <button class="chip" data-f="all" aria-pressed="true">Все</button>
+          <button class="chip" data-f="latin">Латиница</button>
+          <button class="chip" data-f="cyr">Кириллица</button>
+          <button class="chip" data-f="digits">Цифры</button>
+          <button class="chip" data-f="punct">Знаки</button>
+          <button class="chip" data-f="empty">Пустые</button>
+          <button class="chip" data-f="ot">OpenType</button>
+        </div>
+        <div class="gsrch">
+          <span class="inico"><svg class="ico" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5"/><path d="M12.5 12.5l4 4"/></svg><input type="search" id="gsearch" placeholder="Найти: А, U+0416, name"></span>
+          <select id="gmark" aria-label="Фильтр по метке"><option value="">Любая метка</option><option value="1">Правка</option><option value="2">Черновик</option><option value="3">Готово</option><option value="4">Важно</option><option value="none">Без метки</option></select>
+          <div class="seg" role="group" aria-label="Размер карточек"><button data-gs="s" aria-pressed="false">S</button><button data-gs="m" aria-pressed="true">M</button><button data-gs="l" aria-pressed="false">L</button></div>
+        </div>
+        <span class="sp"></span>
+        <div class="gaddw">
+          <input type="text" id="gadd" placeholder="Символ, U+XXXX, fi или a.ss01" title="Один символ или код — обычный глиф; несколько букв — лигатура; a.ss01 — стилистическая альтернатива">
+          <button class="btn" id="bAddGlyph" title="Добавить глиф" aria-label="Добавить глиф"><svg class="ico" viewBox="0 0 20 20"><path d="M10 4v12M4 10h12"/></svg><span>Добавить глиф</span></button>
+        </div>
+        <button class="btn" id="bComp">Диакритика…</button>
+        <button class="btn" id="bOT">OpenType…</button>
+        <button class="btn" id="bSelMode" aria-pressed="false" title="Выбор нескольких глифов для массовых операций (или Ctrl/⌘ + клик)">Выбрать</button>
+      </div>
+      <div class="onb" id="onb" hidden>
+        <div class="onbt"><b>Как начать</b><span class="onbb"><button class="btn sm pri" id="onbTour">Что умеет Kernage — в картинках</button><button class="btn sm ghost" id="onbX" aria-label="Скрыть подсказку">Понятно</button></span></div>
+        <ol>
+          <li><span class="onbn">1</span><span><b>Нарисуйте букву.</b> Нажмите на карточку — откроется редактор с пером, кистью и фигурами. Можно загрузить фото эскиза.</span></li>
+          <li><span class="onbn">2</span><span><b>Настройте кернинг.</b> Во вкладке «Кернинг» кнопка «Рассчитать кернинг» расставит пары автоматически.</span></li>
+          <li><span class="onbn">3</span><span><b>Скачайте шрифт.</b> Кнопка со стрелкой вверху собирает .otf, .ttf и .woff — всё работает без интернета.</span></li>
+        </ol>
+      </div>
+      <p class="stat" id="gstat" style="margin:0 0 12px"></p>
+      <div class="grid" id="grid"></div>
+      <div class="bulk" id="bulk" hidden>
+        <div class="bulkh"><b id="bulkN">0</b><button class="btn sm ghost" id="bulkAll">Выбрать видимые</button><button class="btn sm ghost" id="bulkNone">Снять выбор</button></div>
+        <div class="bulkr">
+          <span class="lbl">Сдвиг</span><input type="number" id="bkDx" placeholder="X" aria-label="Сдвиг X"><input type="number" id="bkDy" placeholder="Y" aria-label="Сдвиг Y"><button class="btn sm" id="bkMove">Сдвинуть</button>
+          <span class="lbl">Масштаб, %</span><input type="number" id="bkSc" placeholder="100" aria-label="Масштаб"><button class="btn sm" id="bkScale">Масштабировать</button>
+          <span class="lbl">Отступы</span><input type="number" id="bkL" placeholder="Л" aria-label="Левый отступ"><input type="number" id="bkR" placeholder="П" aria-label="Правый отступ"><button class="btn sm" id="bkSide">Задать</button>
+          <select id="bkMark" aria-label="Метка"><option value="">Метка…</option><option value="0">Без метки</option><option value="1">Правка</option><option value="2">Черновик</option><option value="3">Готово</option><option value="4">Важно</option></select>
+          <button class="btn sm" id="bkAnch">Авто-якоря</button>
+        </div>
+      </div>
+      <div class="gempty" id="gempty" hidden><span id="gemptyT">Ничего не найдено</span><button class="btn pri" id="gemptyAdd" hidden></button></div>
+    </section>
+
+    <!-- EDITOR -->
+    <section class="view" id="v-editor" hidden>
+      <div class="ed">
+        <div class="rail" id="rail">
+          <button class="tool" data-tool="select" title="Выделение (V)"><svg viewBox="0 0 20 20"><path d="M5 3l10 6.5-4.6 1.1L13 16l-2 1-2.6-5.4L5 15z"/></svg><kbd>V</kbd></button>
+          <button class="tool" data-tool="pen" title="Перо (P): клик — угол, тяни — гладкая точка, клик по первой — замкнуть"><svg viewBox="0 0 20 20"><path d="M10 2l4 8-4 8-4-8z"/><circle cx="10" cy="10" r="1.3"/></svg><kbd>P</kbd></button>
+          <button class="tool" data-tool="rect" title="Прямоугольник (R), Shift — квадрат"><svg viewBox="0 0 20 20"><rect x="4" y="5" width="12" height="10" rx="1"/></svg><kbd>R</kbd></button>
+          <button class="tool" data-tool="ellipse" title="Эллипс (E), Shift — круг"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="10" rx="6.5" ry="5.5"/></svg><kbd>E</kbd></button>
+          <button class="tool" data-tool="hand" title="Рука (H или пробел)"><svg viewBox="0 0 20 20"><path d="M7 10V5a1.2 1.2 0 012.4 0v4M9.4 9V3.8a1.2 1.2 0 012.4 0V9M11.8 9V5a1.2 1.2 0 012.4 0v6c0 3.5-2 6-5 6-2.2 0-3.4-1.2-4.6-3L3 11.4a1.2 1.2 0 012-1.3L7 12"/></svg><kbd>H</kbd></button>
+          <button class="tool" data-tool="brush" title="Кисть (B): рисуйте пальцем, стилусом или мышью"><svg viewBox="0 0 20 20"><path d="M3.5 16.5c2.2 0 3.4-1 3.4-3a2.1 2.1 0 014.2 0c0 2.9-2.3 4.6-5.2 4.6H3.5zM9.6 11.4L16 4.6a1.4 1.4 0 012 2l-6.6 6.6"/></svg><kbd>B</kbd></button>
+          <button class="tool" data-tool="erase" title="Ластик (X)"><svg viewBox="0 0 20 20"><path d="M8 17h9M3.6 12.4l7.2-7.2a1.6 1.6 0 012.2 0l3 3a1.6 1.6 0 010 2.2L10.2 16.2H7.4zM6.6 9.4l5 5"/></svg><kbd>X</kbd></button>
+          <button class="tool" data-tool="measure" title="Линейка (M): тяните поперёк штриха"><svg viewBox="0 0 20 20"><path d="M2.5 13.5l11-11 4 4-11 11zM6 10l1.6 1.6M8.5 7.5l1.6 1.6M11 5l1.6 1.6"/></svg><kbd>M</kbd></button>
+          <button class="tool" data-tool="knife" title="Нож (K): проведите линию через контур, Shift — по углу"><svg viewBox="0 0 20 20"><path d="M3 17L14.5 5.5a2.1 2.1 0 013 3L9 17zM12 8l3 3"/></svg><kbd>K</kbd></button>
+          <button class="tool mob" id="tMulti" aria-pressed="false" title="Добавлять к выделению"><svg viewBox="0 0 20 20"><path d="M4 3l8 5.5-3.6.9 2 4.4-1.8.8-2-4.4L4 13zM15 12v6M12 15h6"/></svg></button>
+          <span class="railsp"></span>
+          <button class="tool" id="bUndo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 20 20"><path d="M7 5L3 9l4 4M3 9h9a5 5 0 010 10h-2"/></svg></button>
+          <button class="tool" id="bRedo" title="Повторить (Ctrl+Shift+Z)"><svg viewBox="0 0 20 20"><path d="M13 5l4 4-4 4M17 9H8a5 5 0 000 10h2"/></svg></button>
+          <button class="tool" id="bFit" title="Вписать (F)"><svg viewBox="0 0 20 20"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/></svg></button>
+          <button class="tool mob" data-sheet="side" title="Свойства глифа" aria-label="Свойства"><svg viewBox="0 0 20 20"><path d="M4 6h12M4 14h12M8 4v4M13 12v4"/></svg></button>
+        </div>
+        <div class="stage">
+          <div class="strip">
+            <button class="btn sm ghost" id="bPrev" title="Предыдущий глиф ([)">‹</button>
+            <span class="cur-g" id="curG">A</span>
+            <button class="btn sm ghost" id="bNext" title="Следующий глиф (])">›</button>
+            <input type="text" id="jump" placeholder="Перейти к…" aria-label="Перейти к глифу">
+            <div class="seg" id="layerSeg" role="group" aria-label="Слой"><button data-layer="main" aria-pressed="true" title="Основной рисунок глифа">Основной</button><button data-layer="bg" aria-pressed="false" title="Фон: эскиз или запасной вариант формы">Фон</button><button data-layer="mL" aria-pressed="false" title="Мастер Light для вариативного шрифта">Light</button><button data-layer="mB" aria-pressed="false" title="Мастер Bold для вариативного шрифта">Bold</button></div>
+            <span class="lbl" style="margin-left:6px">Контекст</span>
+            <input type="text" id="ctxStr" placeholder="HO*OH" title="Звёздочка — текущий глиф" style="width:12ch">
+            <span style="flex:1"></span>
+            <label class="chk"><input type="checkbox" id="oFill"> Просмотр</label>
+            <label class="chk"><input type="checkbox" id="oGrid" checked> Сетка</label>
+            <label class="chk"><input type="checkbox" id="oSnap"> Шаг 10</label>
+            <label class="chk"><input type="checkbox" id="oGhost" checked> Подсказка</label>
+            <label class="chk" title="Привязка к точкам и краям глифа при перетаскивании"><input type="checkbox" id="oSmart" checked> Направляющие</label>
+          </div>
+          <div class="cwrap" id="cwrap"><canvas id="cv"></canvas>
+            <div class="cfloat cf-top" id="brushBar" hidden><span class="lbl">Кисть</span><input type="range" id="brW" min="8" max="400" value="90" aria-label="Толщина кисти"><output class="mono" id="brWv">90</output><label class="chk" title="Сила нажатия стилуса меняет толщину"><input type="checkbox" id="brPress" checked> Нажим</label><label class="chk" title="Сливать мазок с контурами, которые он задел"><input type="checkbox" id="brMerge" checked> Слить</label></div>
+            <div class="cfloat cf-botl" id="selBar" hidden><button class="btn sm" id="sbSmooth">Угол ↔ гладкая</button><button class="btn sm" id="sbDup">Дублировать</button><button class="btn sm" id="sbDel">Удалить</button><button class="btn sm" id="sbNone">Снять</button></div>
+            <div class="cfloat cf-bot" id="penBar" hidden><button class="btn sm" id="penClose">Замкнуть</button><button class="btn sm pri" id="penDone">Готово</button></div>
+          </div>
+          <div class="status"><span id="stPos">x — y —</span><span id="stZoom">100%</span><span id="stSel">—</span><span style="flex:1"></span><span class="deskhint">Двойной клик по линии — новая точка · Alt+клик — угол/гладкая · Shift — по оси</span></div>
+        </div>
+        <aside class="side sheet" id="side" data-title="Свойства глифа">
+          <details open><summary><h2>Глиф</h2></summary><div class="sbody">
+            <div class="ginfo"><div class="big" id="pBig">A</div>
+              <span class="lbl">Юникод</span><span class="mono" id="pUni">U+0041</span>
+              <span class="lbl">Имя</span><input type="text" id="pName" spellcheck="false">
+            </div>
+            <div class="row">
+              <label class="fld"><span class="lbl">Ширина</span><input type="number" id="pAdv"></label>
+              <label class="fld"><span class="lbl">Слева</span><input type="number" id="pLsb"></label>
+              <label class="fld"><span class="lbl">Справа</span><input type="number" id="pRsb"></label>
+            </div>
+            <div class="row2"><label class="fld" title="Например =O, =|H (другая сторона H), =O+10"><span class="lbl">Формула слева</span><input type="text" id="pLsbF" placeholder="=O" spellcheck="false"></label><label class="fld" title="Например =O, =|H (другая сторона H), =O+10"><span class="lbl">Формула справа</span><input type="text" id="pRsbF" placeholder="=|H" spellcheck="false"></label></div>
+            <div class="btns"><button class="btn sm" id="bCenter">Центрировать</button><button class="btn sm" id="bMetricsFrom">Отступы как у…</button><input type="text" id="mFrom" placeholder="H" style="width:3.5em"></div>
+            <div class="marks" role="group" aria-label="Метка глифа"><span class="lbl">Метка</span><button data-m="0" title="Без метки">—</button><button data-m="1" title="Правка"></button><button data-m="2" title="Черновик"></button><button data-m="3" title="Готово"></button><button data-m="4" title="Важно"></button></div>
+            <label class="chk"><input type="checkbox" id="pFxSkip"> Не применять деструкцию к этому глифу</label>
+            <div class="btns"><span class="lbl" style="align-self:center">Экспорт глифа</span><button class="btn sm" id="bGlyphSvg">SVG</button><button class="btn sm" id="bGlyphPng">PNG</button></div>
+            <div class="compinfo" id="compInfo" hidden><span id="compTxt"></span><button class="btn sm" id="bCompRe">Пересобрать</button></div>
+          </div></details>
+          <details open id="layerBox" hidden><summary><h2>Слой</h2></summary><div class="sbody">
+            <p class="hint" id="layerInfo" style="margin:0"></p>
+            <div class="btns" id="layerBtns"><button class="btn sm" id="bLayerFromMain">Скопировать основной</button><button class="btn sm" id="bLayerSwap">Поменять с основным</button><button class="btn sm" id="bLayerAuto">Создать автоматически</button><button class="btn sm" id="bLayerClear">Очистить слой</button></div>
+          </div></details>
+          <details open><summary><h2>Якоря</h2></summary><div class="sbody">
+            <span class="hint">Точки, к которым прикрепляются диакритические знаки: top и bottom у букв, _top и _bottom у знаков.</span>
+            <div class="reflist" id="anchList"></div>
+            <div class="btns"><select id="anchName" aria-label="Имя якоря"><option>top</option><option>bottom</option><option>_top</option><option>_bottom</option></select><button class="btn sm" id="bAnchAdd">Добавить</button><button class="btn sm" id="bAnchAuto">Авто</button></div>
+          </div></details>
+          <details open><summary><h2>Компоненты</h2></summary><div class="sbody">
+            <span class="hint">Компонент — ссылка на другой глиф. Измените исходный глиф, и все буквы с ним обновятся.</span>
+            <div class="btns"><input type="text" id="refIn" placeholder="Глиф, например O" style="width:9em"><button class="btn sm" id="bAddRef">Вставить компонент</button></div>
+            <div class="reflist" id="refList"></div>
+            <p class="hint" id="refUsed" style="margin:0" hidden></p>
+          </div></details>
+          <details open><summary><h2>Выделение</h2></summary><div class="sbody">
+            <div class="row2">
+              <label class="fld"><span class="lbl" id="lX">X</span><input type="number" id="pX"></label>
+              <label class="fld"><span class="lbl" id="lY">Y</span><input type="number" id="pY"></label>
+            </div>
+            <div class="btns">
+              <button class="btn sm" id="bSmooth" title="Alt+клик по точке">Угол ↔ гладкая</button>
+              <button class="btn sm" id="bRetract">Убрать ручки</button>
+              <button class="btn sm" id="bStart">Сделать начальной</button>
+              <button class="btn sm" id="bDelNodes">Удалить</button>
+              <button class="btn sm" id="bSelAll">Выделить всё</button>
+              <button class="btn sm" id="bSelNone">Снять</button>
+            </div>
+            <div class="row2"><label class="fld"><span class="lbl">Ширина выделения</span><input type="number" id="pW"></label><label class="fld"><span class="lbl">Высота выделения</span><input type="number" id="pH"></label></div>
+            <label class="fld"><span class="lbl">Shift: шаг угла</span><select id="angStep"><option value="15">15°</option><option value="45" selected>45°</option><option value="90">90°</option></select></label>
+            <div class="nudgerow">
+              <div class="nudge" role="group" aria-label="Сдвиг выделения"><button data-nd="0,1" aria-label="Вверх">↑</button><button data-nd="-1,0" aria-label="Влево">←</button><button data-nd="1,0" aria-label="Вправо">→</button><button data-nd="0,-1" aria-label="Вниз">↓</button></div>
+              <label class="fld"><span class="lbl">Шаг</span><select id="ndStep"><option>1</option><option selected>10</option><option>50</option></select></label>
+            </div>
+            <span class="lbl">Выровнять точки</span>
+            <div class="btns aln"><button class="btn sm" data-al="l">По левому</button><button class="btn sm" data-al="cx">По центру</button><button class="btn sm" data-al="r">По правому</button><button class="btn sm" data-al="t">По верху</button><button class="btn sm" data-al="cy">По середине</button><button class="btn sm" data-al="b">По низу</button></div>
+          </div></details>
+          <details open><summary><h2>Контуры</h2></summary><div class="sbody">
+            <div class="btns">
+              <button class="btn sm" id="bReverse">Развернуть</button>
+              <button class="btn sm" id="bDirs">Исправить направления</button>
+              <button class="btn sm" id="bRound">Округлить</button>
+            </div>
+            <span class="lbl">Цвет контура</span>
+            <div class="pal" id="palRow"></div>
+            <span class="hint">Выделите контуры и нажмите цвет. Цветные контуры попадают в шрифт слоями COLR, без цвета — цвет текста.</span>
+            <span class="lbl">Булевы операции</span>
+            <div class="btns">
+              <button class="btn sm" id="bUnion" title="Убрать перекрытия у всех контуров">Объединить</button>
+              <button class="btn sm" id="bSubtract" title="Вычесть выделенные контуры из остальных">Вычесть</button>
+              <button class="btn sm" id="bIntersect" title="Пересечение выделенных и остальных">Пересечь</button>
+              <button class="btn sm" id="bXor">Исключить</button>
+            </div>
+            <span class="hint">Вычесть и Пересечь работают с выделенными контурами против остальных.</span>
+            <span class="lbl">Углы и качество</span>
+            <div class="btns"><input type="number" id="tRad" value="40" aria-label="Радиус" style="width:5em"><button class="btn sm" id="bRoundCorners" title="Скругляет выделенные угловые точки">Скруглить углы</button></div>
+            <div class="btns"><button class="btn sm" id="bExtremes">Точки экстремумов</button><button class="btn sm" id="bCheck">Проверить</button><button class="btn sm" id="bOvershoot" title="Добавить оптический свес круглым буквам">Свесы</button><button class="btn sm" id="bFixAll" hidden>Исправить всё</button></div>
+            <p class="hint chk-out" id="chkOut" hidden></p>
+          </div></details>
+          <details open><summary><h2>Трансформация</h2></summary><div class="sbody">
+            <div class="btns"><button class="btn sm" id="bFlipH">Отразить ↔</button><button class="btn sm" id="bFlipV">Отразить ↕</button></div>
+            <div class="row">
+              <label class="fld"><span class="lbl">Поворот°</span><input type="number" id="tRot" value="15"></label>
+              <label class="fld"><span class="lbl">Масштаб %</span><input type="number" id="tScale" value="110"></label>
+              <label class="fld"><span class="lbl">Наклон°</span><input type="number" id="tSkew" value="10"></label>
+            </div>
+            <div class="btns"><button class="btn sm" id="bRot">Повернуть</button><button class="btn sm" id="bScale">Масштаб</button><button class="btn sm" id="bSkew">Наклонить</button></div>
+            <span class="hint">Применяется к выделению, а без него ко всему глифу.</span>
+          </div></details>
+          <details open><summary><h2>Эскиз и трассировка</h2></summary><div class="sbody">
+            <span class="hint">Нарисуйте букву на бумаге, сфотографируйте и превратите в контуры.</span>
+            <div class="btns"><label class="btn sm" style="cursor:pointer">Загрузить эскиз<input type="file" id="bgFile" accept="image/*" hidden></label><label class="btn sm mob" style="cursor:pointer">Камера<input type="file" id="bgCam" accept="image/*" capture="environment" hidden></label><button class="btn sm" id="bBgClear">Убрать</button></div>
+            <div class="btns"><select id="fitTo" aria-label="Высота буквы на эскизе"><option value="auto">Высота: авто</option><option value="cap">Прописная</option><option value="x">Строчная</option><option value="asc">С верхним выносным</option><option value="desc">С нижним выносным</option></select><button class="btn sm" id="bBgFit">Подогнать эскиз</button></div>
+            <label class="fld"><span class="lbl">Прозрачность эскиза</span><input type="range" id="bgOp" min="5" max="100" value="35"></label>
+            <label class="fld"><span class="lbl">Размер эскиза</span><input type="range" id="bgSc" min="5" max="1000" value="100"></label>
+            <div class="row2"><label class="fld"><span class="lbl">Сдвиг X</span><input type="range" id="bgX" min="-3000" max="3000" value="0"></label><label class="fld"><span class="lbl">Сдвиг Y</span><input type="range" id="bgY" min="-3000" max="3000" value="0"></label></div>
+            <div class="row2"><label class="fld"><span class="lbl">Порог <span class="mono" id="trThrV">128</span></span><input type="range" id="trThr" min="1" max="254" value="128"></label><label class="fld"><span class="lbl">Плавность <span class="mono" id="trErrV">1.6</span></span><input type="range" id="trErr" min="5" max="60" value="16"></label></div>
+            <label class="chk"><input type="checkbox" id="trInv"> Светлые линии на тёмном фоне</label>
+            <label class="chk"><input type="checkbox" id="trRepl" checked> Заменить контуры глифа</label>
+            <button class="btn sm pri" id="bTrace" style="justify-self:start">Трассировать эскиз</button>
+          </div></details>
+          <details><summary><h2>Перенос и удаление</h2></summary><div class="sbody">
+            <div class="btns"><input type="text" id="copyFrom" placeholder="O" style="width:3.5em"><button class="btn sm" id="bCopyFrom">Вставить контуры из глифа</button></div>
+            <button class="btn sm" id="bDelGlyph" style="justify-self:start">Удалить глиф из шрифта</button>
+          </div></details>
+        </aside>
+      </div>
+    </section>
+
+    <!-- KERNING -->
+    <section class="view" id="v-kern" hidden>
+      <div class="kv">
+        <div class="klist sheet" id="klist" data-title="Пары кернинга">
+          <div class="khead">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Пары</h2><span class="stat mono" id="kcount">0</span></div>
+            <input type="text" id="kfilter" placeholder="Фильтр: A, To, я">
+            <div class="row2">
+              <select id="ksort" aria-label="Сортировка"><option value="pair">Алфавит</option><option value="neg">Сжатие</option><option value="pos">Разрядка</option></select>
+              <button class="btn sm" id="bKernClear">Очистить всё</button>
+            </div>
+          </div>
+          <div class="krows" id="krows"></div>
+        </div>
+        <div class="kmain">
+          <div class="kstage" id="kstage" title="Тяните влево-вправо, чтобы изменить кернинг"><canvas id="kcv"></canvas></div>
+          <div class="kctl">
+            <div class="kpair"><button class="btn sm" id="kPrevP" title="Предыдущая пара в тестовой строке ([)" aria-label="Предыдущая пара">‹</button><input type="text" id="kL" maxlength="8" aria-label="Левый глиф"><input type="text" id="kR" maxlength="8" aria-label="Правый глиф"><button class="btn sm" id="kNextP" title="Следующая пара в тестовой строке (])" aria-label="Следующая пара">›</button></div>
+            <button class="btn sm" data-kd="-10">−10</button><button class="btn sm" data-kd="-1">−1</button>
+            <input type="range" id="kRange" min="-300" max="200" step="1" aria-label="Значение кернинга">
+            <button class="btn sm" data-kd="1">+1</button><button class="btn sm" data-kd="10">+10</button>
+            <span class="kval" id="kVal">0</span>
+            <span class="ksrc" id="kSrc"></span>
+            <button class="btn sm" id="kUndoB" title="Отменить (Ctrl+Z)" aria-label="Отменить">↶</button><button class="btn sm" id="kRedoB" title="Повторить (Ctrl+Shift+Z)" aria-label="Повторить">↷</button>
+            <button class="btn sm" id="bKernZero">Сбросить пару</button>
+          </div>
+          <div class="ktestw">
+            <div class="ktbar">
+              <span class="lbl">Тест</span>
+              <input type="text" id="ktest" spellcheck="false">
+              <select id="kpreset" aria-label="Готовые строки">
+                <option value="">Строки…</option>
+                <option>AVATAR WAVY TOYOTA LYNX</option>
+                <option>Type Vow Fly Tea, Yo. LT</option>
+                <option>ТАРАКАН ГОРА ПАРК ГАЛА</option>
+                <option>Атака Тогда Гора Ягоды</option>
+                <option>1970, 2741. 7.4 P.T.</option>
+              </select>
+              <label class="chk"><input type="checkbox" id="kOn" checked> С кернингом</label>
+              <label class="chk" title="Подставлять в тестовую строку настоящие слова с выбранной парой"><input type="checkbox" id="kWords"> Слова с парой</label>
+              <button class="btn sm mob" data-sheet="klist">Пары</button><button class="btn sm mob" data-sheet="kside">Авто</button>
+            </div>
+            <div class="ktest" id="ktestw"><canvas id="ktcv"></canvas></div>
+          </div>
+        </div>
+        <aside class="side sheet" id="kside" data-title="Автокернинг и отступы">
+          <details open><summary><h2>Автокернинг</h2></summary><div class="sbody">
+            <span class="hint">Сравнивает белое пространство между профилями глифов с эталонными парами HH, nn и подбирает значения.</span>
+            <label class="fld"><span class="lbl">Охват</span><select id="aScope">
+              <option value="latinU">Прописные латиницы и цифры</option>
+              <option value="latin" selected>Вся латиница</option>
+              <option value="cyr">Кириллица</option>
+              <option value="all">Все глифы</option>
+              <option value="test">Символы тестовой строки</option></select></label>
+            <label class="fld"><span class="lbl">Сила <span class="mono" id="aStrV">60%</span></span><input type="range" id="aStr" min="10" max="100" value="60"></label>
+            <label class="fld"><span class="lbl">Глубина впадин <span class="mono" id="aDepV">110</span></span><input type="range" id="aDep" min="30" max="260" value="110"></label>
+            <label class="fld"><span class="lbl">Мин. зазор <span class="mono" id="aMinV">40</span></span><input type="range" id="aMin" min="0" max="140" value="40"></label>
+            <label class="fld"><span class="lbl">Не записывать меньше <span class="mono" id="aThrV">20</span></span><input type="range" id="aThr" min="1" max="50" value="20"></label>
+            <label class="chk"><input type="checkbox" id="aKeep" checked> Не менять уже заданные пары</label>
+            <label class="chk"><input type="checkbox" id="aGroups" checked> Записывать на группы</label>
+            <button class="btn pri" id="bAutoKern">Рассчитать кернинг</button>
+          </div></details>
+          <details open><summary><h2>Проблемные пары</h2></summary><div class="sbody">
+            <span class="hint">Сравнивает текущий кернинг с расчётом и показывает пары с самым большим расхождением. Охват и параметры — из автокернинга.</span>
+            <div class="btns"><button class="btn sm" id="bProblems">Найти проблемные пары</button><button class="btn sm" id="bProbAll" hidden>Применить все</button></div>
+            <div class="problist" id="probList"></div>
+          </div></details>
+          <details open><summary><h2>Группы кернинга</h2></summary><div class="sbody">
+            <span class="hint">Буквы с похожей стороной кернятся вместе: правка AV сразу действует на ÀV, ÁV и кириллическое АV.</span>
+            <div class="btns"><button class="btn sm pri" id="bAutoGroups">Автогруппы</button><button class="btn sm" id="bClearGroups">Убрать группы</button></div>
+            <label class="chk"><input type="checkbox" id="kgMode" checked> Править целыми группами</label>
+            <p class="hint" id="kgStat" style="margin:0"></p>
+            <label class="fld"><span class="lbl">Правая сторона буквы</span><textarea id="kgL" rows="5" spellcheck="false" aria-label="Группы по правой стороне"></textarea></label>
+            <label class="fld"><span class="lbl">Левая сторона буквы</span><textarea id="kgR" rows="5" spellcheck="false" aria-label="Группы по левой стороне"></textarea></label>
+            <span class="hint">Одна строка — одна группа, первый символ главный. Например: O C G Q Ö</span>
+            <button class="btn sm" id="bApplyGroups" style="justify-self:start">Применить группы</button>
+          </div></details>
+          <details open><summary><h2>Автоспейсинг</h2></summary><div class="sbody">
+            <span class="hint">Расставляет левые и правые отступы по форме сторон: у круглых и открытых сторон отступ меньше, чем у прямых.</span>
+            <label class="fld"><span class="lbl">Отступ прямой стороны <span class="mono" id="sSbV">60</span></span><input type="range" id="sSb" min="10" max="160" value="60"></label>
+            <label class="fld"><span class="lbl">Сила <span class="mono" id="sStrV">75%</span></span><input type="range" id="sStr" min="0" max="100" value="75"></label>
+            <button class="btn" id="bAutoSpace">Расставить отступы</button>
+          </div></details>
+        </aside>
+      </div>
+    </section>
+
+    <!-- DESTRUCTION -->
+    <section class="view" id="v-fx" hidden>
+      <div class="fxv">
+        <div class="fxmain">
+          <div class="strip">
+            <div class="seg" role="group" aria-label="Режим"><button data-fm="glyph" aria-pressed="true">Глиф</button><button data-fm="phrase" aria-pressed="false">Фраза</button></div>
+            <span id="fxGlyphNav" class="kpair"><button class="btn sm ghost" id="fxPrev" title="Предыдущий (←)">‹</button><span class="cur-g" id="fxCur">R</span><button class="btn sm ghost" id="fxNext" title="Следующий (→)">›</button></span>
+            <input type="text" id="fxPhrase" spellcheck="false" aria-label="Фраза" style="flex:1;min-width:140px" hidden>
+            <span style="flex:1"></span>
+            <span class="lbl mono" id="fxStat"></span>
+            <button class="btn sm mob" data-sheet="fxside">Эффекты</button><button class="btn sm pri mob" id="fxRandom2">Случайно</button>
+          </div>
+          <div class="fxstage" id="fxStage" title="Колёсико или щипок — масштаб, двойной клик — глиф или фраза"><canvas id="fxcv"></canvas></div>
+          <div class="fxfoot">
+            <label class="chk"><input type="checkbox" id="fxPts" checked> Точки</label>
+            <label class="chk"><input type="checkbox" id="fxTech"> Техническое</label>
+            <label class="chk"><input type="checkbox" id="fxOutline"> Контур</label>
+            <label class="chk"><input type="checkbox" id="fxOnion"> Исходник</label>
+            <span class="kpair"><button class="btn sm" id="fxZoomOut" aria-label="Уменьшить">−</button><button class="btn sm ghost mono" id="fxZoom" title="Сбросить масштаб">1.00×</button><button class="btn sm" id="fxZoomIn" aria-label="Увеличить">+</button></span>
+            <span class="kpair"><span class="lbl">Зерно</span><input type="number" id="fxSeed" style="width:5.5em"><button class="btn sm" id="fxDice" title="Новое случайное зерно">Перебросить</button></span>
+            <label class="chk"><input type="checkbox" id="fxAnim"> Анимация</label>
+            <label class="chk"><input type="checkbox" id="fxSound"> Звук</label>
+          </div>
+        </div>
+        <div class="fxgrid" id="fxGrid" aria-label="Глифы с эффектами"></div>
+        <aside class="side fxside sheet" id="fxside" data-title="Эффекты">
+          <div class="sbody fxtop">
+            <div class="row2"><button class="btn pri" id="fxRandom" title="Клавиша R">Случайно</button><button class="btn" id="fxReset">Сбросить всё</button></div>
+            <label class="fld"><span class="lbl">Пресет</span><select id="fxPreset"><option value="">Выбрать…</option></select></label>
+            <div class="btns"><input type="text" id="fxPName" placeholder="Название своего пресета" style="flex:1;min-width:0"><button class="btn sm" id="fxPSave">Сохранить</button></div>
+            <div class="btns"><button class="btn sm" id="fxPDel">Удалить мой</button><button class="btn sm" id="fxPCopy">Код пресета</button><button class="btn sm" id="fxPPaste">Вставить код</button></div>
+            <input type="text" id="fxCode" placeholder="LFX1:…" spellcheck="false" hidden>
+          </div>
+          <div id="fxTiers"></div>
+          <div class="sbody fxexp">
+            <h2>Результат</h2>
+            <label class="chk"><input type="checkbox" id="fxOn" checked> Применять к экспорту и просмотру</label>
+            <div class="row2"><select id="fxFmt" aria-label="Формат"><option value="zip">Архив: .otf .ttf .woff</option><option value="ttf">TrueType .ttf</option><option value="svgfont">SVG-шрифт .svg</option><option value="svgtext">Фраза в .svg</option><option value="png">Фраза в .png</option><option value="gif">Анимация .gif</option><option value="video">Анимация .mp4 / .webm</option></select><button class="btn pri" id="fxExport">Экспорт</button></div>
+            <div class="row2"><button class="btn" id="fxBake" title="Заменяет контуры всех глифов результатом, после чего их можно править в редакторе">Запечь все</button><button class="btn" id="fxBakeOne" title="Запекает только текущий глиф и исключает его из дальнейших эффектов">Запечь глиф</button></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- PREVIEW -->
+    <section class="view pad" id="v-preview" hidden>
+      <div class="pv">
+        <div class="pctl">
+          <label class="fld keep"><span class="lbl">Кегль <span class="mono" id="pvSizeV">64</span></span><input type="range" id="pvSize" min="10" max="240" value="64"></label>
+          <label class="fld"><span class="lbl">Интерлиньяж <span class="mono" id="pvLhV">1.15</span></span><input type="range" id="pvLh" min="80" max="200" value="115"></label>
+          <label class="fld"><span class="lbl">Трекинг <span class="mono" id="pvTrV">0</span></span><input type="range" id="pvTr" min="-100" max="300" value="0"></label>
+          <label class="fld keep"><span class="lbl">Текст</span><select id="pvPreset">
+            <option value="0">Панграммы</option><option value="1">Прописные</option><option value="2">Строчные</option><option value="3">Кернинг</option><option value="4">Цифры и знаки</option></select></label>
+          <label class="chk"><input type="checkbox" id="pvKern" checked> Кернинг</label>
+          <div class="seg" role="group" aria-label="Выключка"><button data-pa="left" aria-pressed="true">Влево</button><button data-pa="center" aria-pressed="false">Центр</button><button data-pa="right" aria-pressed="false">Вправо</button></div>
+          <label class="colr"><span class="lbl">Текст</span><input type="color" id="pvInk" value="#131722"></label>
+          <label class="colr"><span class="lbl">Фон</span><input type="color" id="pvPaper" value="#fcfdfe"></label>
+          <button class="btn sm" id="pvColReset">Цвета темы</button>
+          <button class="btn sm" id="pvPng">Образец .png</button>
+          <button class="btn sm keep" id="pvPoster">Постер…</button>
+          <label class="fld" id="pvWghtF" hidden><span class="lbl">Вес <span class="mono" id="pvWghtV">400</span></span><input type="range" id="pvWght" min="300" max="700" value="400"></label>
+          <span class="pvfeat" id="pvFeat" hidden></span>
+          <button class="btn sm mob keep" id="pvMore" aria-expanded="false">Ещё настройки</button>
+          <span class="livestat keep" id="liveStat">Сборка…</span>
+        </div>
+        <div class="proof" id="proof" contenteditable="true" spellcheck="false"></div>
+        <div><div class="lbl" style="margin-bottom:8px">Водопад</div><div class="wf" id="wf"></div></div>
+        <div><div class="lbl" style="margin-bottom:8px">Все глифы</div><div class="chart" id="chart"></div></div>
+        <p class="note">Символы, которых нет в шрифте, показываются запасной гарнитурой интерфейса.</p>
+      </div>
+    </section>
+
+    <!-- FONT -->
+    <section class="view pad" id="v-font" hidden>
+      <div class="fi">
+        <div class="card">
+          <h2>Сведения</h2>
+          <label class="fld"><span class="lbl">Семейство</span><input type="text" id="iFamily"></label>
+          <label class="fld"><span class="lbl">Начертание</span><input type="text" id="iStyle"></label>
+          <label class="fld"><span class="lbl">Автор</span><input type="text" id="iDesigner"></label>
+          <div class="row2"><label class="fld"><span class="lbl">Версия</span><input type="text" id="iVersion"></label><label class="fld"><span class="lbl">Единиц на кегль</span><input type="number" id="iUpm" disabled></label></div>
+          <label class="fld"><span class="lbl">Описание</span><input type="text" id="iDesc"></label>
+        </div>
+        <div class="card">
+          <h2>Вертикальные метрики</h2>
+          <div class="row2">
+            <label class="fld"><span class="lbl">Верхние выносные</span><input type="number" id="iAsc"></label>
+            <label class="fld"><span class="lbl">Нижние выносные</span><input type="number" id="iDesc2"></label>
+            <label class="fld"><span class="lbl">Высота прописных</span><input type="number" id="iCap"></label>
+            <label class="fld"><span class="lbl">Высота строчных</span><input type="number" id="iX"></label>
+            <label class="fld"><span class="lbl">Межстрочный зазор</span><input type="number" id="iGap"></label>
+            <label class="fld"><span class="lbl">Оптический свес</span><input type="number" id="iOver"></label>
+          </div>
+          <canvas class="mdiag" id="mcv" width="560" height="200" aria-label="Схема метрик"></canvas>
+          <div class="btns"><button class="btn sm" id="bOverCheck">Проверить свесы</button><button class="btn sm" id="bOverFix" hidden>Исправить все</button></div>
+          <p class="hint chk-out" id="overOut" hidden></p>
+        </div>
+        <div class="card">
+          <h2>Файлы</h2>
+          <p class="note" style="margin:0" id="fstat"></p>
+          <label class="chk"><input type="checkbox" id="xOtf" checked> OpenType .otf</label>
+          <label class="chk"><input type="checkbox" id="xTtf" checked> TrueType .ttf</label>
+          <label class="chk"><input type="checkbox" id="xWoff" checked> Веб-шрифт .woff</label>
+          <label class="chk"><input type="checkbox" id="xSvg"> SVG-шрифт .svg</label>
+          <label class="chk"><input type="checkbox" id="xJson" checked> Исходник проекта .json</label>
+          <label class="chk"><input type="checkbox" id="xWeb"> Веб-набор: CSS и HTML-образец</label>
+          <label class="chk" title="Выравнивает буквы по линиям на мелких кеглях в Windows"><input type="checkbox" id="xHint" checked> Хинтинг .ttf для мелкого текста</label>
+          <label class="chk"><input type="checkbox" id="xVar"> Вариативный .ttf с осью веса</label>
+          <div class="row2" id="varRow" hidden><label class="fld"><span class="lbl">Light, единиц</span><input type="number" id="vLight" value="-24"></label><label class="fld"><span class="lbl">Bold, единиц</span><input type="number" id="vBold" value="40"></label></div>
+          <label class="chk"><input type="checkbox" id="xColor" checked> Цветные слои (COLR/CPAL)</label>
+          <label class="chk"><input type="checkbox" id="xUfo"> UFO для Glyphs, FontLab, RoboFont</label>
+          <span class="lbl">Начертания семейства</span>
+          <div class="btns fam"><label class="chk"><input type="checkbox" id="fvLight"> Light</label><label class="chk"><input type="checkbox" id="fvBold"> Bold</label><label class="chk"><input type="checkbox" id="fvItalic"> Italic</label><label class="chk"><input type="checkbox" id="fvBoldItalic"> Bold Italic</label></div>
+          <span class="hint">Генерируются из текущих контуров: вес меняет толщину штриха, курсив наклоняет глифы.</span>
+          <div class="btns"><button class="btn pri" id="bExport2">Скачать архив</button><button class="btn" id="bSaveJson">Только проект .json</button></div>
+          <div class="btns"><label class="btn" style="cursor:pointer" title="Заполняет пустые глифы и добавляет недостающие буквы из другого шрифта">Дополнить из шрифта<input type="file" id="fFill" accept=".otf,.ttf,.woff,.woff2,font/otf,font/ttf,font/woff,font/woff2" hidden></label></div>
+          <div class="btns"><label class="btn" style="cursor:pointer">Открыть файл<input type="file" id="fOpen" accept=".json,.otf,.ttf,.woff,.woff2,.zip,.glyphs,application/json,application/zip,font/otf,font/ttf,font/woff,font/woff2" hidden></label><label class="btn deskonly" style="cursor:pointer">Папка .ufo<input type="file" id="fUfoDir" webkitdirectory hidden></label></div>
+          <span class="hint">Открывает .json, .otf, .ttf, .woff, .woff2, .glyphs и UFO (папкой или в .zip). Из шрифтов переносятся кернинг, альтернативы и лигатуры.</span>
+          <div class="btns"><button class="btn" id="bShare">Поделиться проектом</button><button class="btn" id="bLink">Ссылка на проект</button></div>
+          </div>
+        <div class="card">
+          <h2>История версий</h2>
+          <div class="btns"><input type="text" id="verName" placeholder="Название версии" style="flex:1;min-width:0"><button class="btn" id="bVerSave">Сохранить версию</button></div>
+          <div class="vlist" id="vlist"></div>
+          <p class="hint" style="margin:0">Версии хранятся в этом браузере. Автоснимок делается раз в 10 минут работы.</p>
+        </div>
+        <div class="card">
+          <h2>Мои шрифты</h2>
+          <div class="plist" id="plist"></div>
+          <div class="btns"><button class="btn" id="bNewFont">Новый пустой</button><button class="btn" id="bSample">Новый из образца</button><button class="btn" id="bDup">Дублировать</button></div>
+          <p class="hint" style="margin:0">Проекты сохраняются в этом браузере автоматически. Чтобы перенести шрифт на другое устройство, скачайте .json.</p>
+        </div>
+      </div>
+      <div class="credits" id="credFont"><span class="cby">Kernage · <span>сделал</span> <a href="https://github.com/gexhaw" target="_blank" rel="noopener">gexhaw</a></span><a class="btn sm" href="https://github.com/gexhaw/kernage" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true" style="fill:currentColor;stroke:none"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a><a class="btn sm" href="https://www.instagram.com/gexhaw/" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="4"/><circle cx="10" cy="10" r="3.2"/><circle cx="14.2" cy="5.8" r=".6" style="fill:currentColor"/></svg><span>Instagram</span></a></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="modal" id="mComp" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mCompT">
+  <div class="mhead"><h2 id="mCompT">Диакритика</h2><button class="btn sm ghost" data-close>Закрыть</button></div>
+  <p class="note">Собирает буквы с надстрочными и подстрочными знаками из базовых глифов и знаков <span class="markrow">` ´ ˆ ˜ ¨ ˚ ˇ ˘ ˙ ¸</span>. Сначала нарисуйте знаки, если их нет.</p>
+  <div class="cgroups" id="cGroups"></div>
+  <label class="chk"><input type="checkbox" id="cKern" checked> Переносить кернинг базовых букв</label>
+  <label class="chk"><input type="checkbox" id="cOver"> Перезаписывать уже нарисованные глифы</label>
+  <div class="btns"><button class="btn pri" id="bCompGo">Собрать</button><button class="btn" id="bCompAll">Пересобрать все составные</button></div>
+</div></div>
+<div class="modal" id="mOT" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mOTT">
+  <div class="mhead"><h2 id="mOTT">OpenType-функции</h2><button class="btn sm ghost" data-close>Закрыть</button></div>
+  <div class="otrow"><div><b>Табличные цифры (tnum)</b><p class="hint">Все цифры одной ширины — для таблиц и цен. Создаются копии 0–9 с общей шириной.</p></div><button class="btn" id="bTnum">Создать</button></div>
+  <div class="otrow"><div><b>Капитель (smcp)</b><p class="hint">Прописные высотой со строчные. Генерируются из прописных с компенсацией толщины, потом их можно доработать.</p></div><button class="btn" id="bSmcp">Создать</button></div>
+  <div class="otrow"><div><b>Якоря и комбинируемые знаки (mark, mkmk)</b><p class="hint">Расставляет якоря всем буквам и знакам и создаёт знаки U+0300–U+0327, которые садятся на любую букву: a + ́ = á.</p></div><div class="btns" style="flex-direction:column"><button class="btn" id="bAnchAll">Расставить якоря</button><button class="btn" id="bCombMake">Создать знаки</button></div></div>
+  <div class="otrow" style="grid-template-columns:minmax(0,1fr)"><div><b>Контекстные замены (calt)</b><p class="hint">Одна замена на строку. В квадратных скобках — буква, которую меняем, вокруг — соседи, после стрелки — альтернатива. Фигурные скобки — любая из букв.</p>
+    <textarea id="caltText" rows="4" spellcheck="false" placeholder="f [a] > a.ss01&#10;{xz} [{ae}] > .calt"></textarea><p class="hint" id="caltStat" style="margin:4px 0 0"></p></div></div>
+  <div class="otrow"><div><b>Лигатуры и альтернативы</b><p class="hint">Введите fi или a.ss01 в поле «Добавить глиф» на вкладке «Глифы».</p></div></div>
+  <p class="hint" id="otStat"></p>
+</div></div>
+<div class="modal" id="mPoster" hidden><div class="mbox wide" role="dialog" aria-modal="true" aria-labelledby="mPosterT">
+  <div class="mhead"><h2 id="mPosterT">Постер шрифта</h2><button class="btn sm ghost" data-close>Закрыть</button></div>
+  <div class="poster">
+    <div class="pform">
+      <label class="fld"><span class="lbl">Шаблон</span><select id="poTpl"><option value="big">Крупная буква</option><option value="alpha">Алфавит</option><option value="word">Слово и текст</option><option value="spec">Специмен</option></select></label>
+      <label class="fld"><span class="lbl">Формат</span><select id="poSize"><option value="1080x1350">Пост 1080 × 1350</option><option value="1080x1920">Сторис 1080 × 1920</option><option value="1920x1080">Обложка 1920 × 1080</option><option value="2480x3508">A4 2480 × 3508</option></select></label>
+      <label class="fld"><span class="lbl">Текст</span><input type="text" id="poText" spellcheck="false"></label>
+      <div class="row2"><label class="colr"><span class="lbl">Текст</span><input type="color" id="poInk" value="#131722"></label><label class="colr"><span class="lbl">Фон</span><input type="color" id="poBg" value="#F1EEE6"></label></div>
+      <label class="colr"><span class="lbl">Акцент</span><input type="color" id="poAcc" value="#2D43D2"></label>
+      <button class="btn pri" id="poSave">Скачать .png</button>
+    </div>
+    <div class="pview"><canvas id="poCv"></canvas></div>
+  </div>
+</div></div>
+<div class="modal" id="mTour" hidden><div class="mbox wide tour" role="dialog" aria-modal="true" aria-labelledby="mTourT">
+  <div class="mhead"><h2 id="mTourT">Что умеет Kernage</h2><button class="btn sm ghost" data-close>Закрыть</button></div>
+  <figure class="tfig" id="tourFig"><img id="tourImg" alt="" draggable="false"><button class="tnav" id="tourPrev" aria-label="Назад"><svg class="ico" viewBox="0 0 20 20"><path d="M12 4l-6 6 6 6"/></svg></button><button class="tnav nx" id="tourNext" aria-label="Дальше"><svg class="ico" viewBox="0 0 20 20"><path d="M8 4l6 6-6 6"/></svg></button></figure>
+  <div class="ttext"><span class="tnum" id="tourN"></span><b id="tourH"></b><p id="tourP"></p></div>
+  <div class="tfoot"><div class="tdots" id="tourDots"></div><button class="btn" id="tourTry">Попробовать</button><button class="btn pri" id="tourNext2">Дальше</button></div>
+</div></div>
+<div class="modal" id="mHelp" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mHelpT">
+  <div class="mhead"><h2 id="mHelpT">Подсказки</h2><span class="onbb"><button class="btn sm pri" id="helpTour">Тур в картинках</button><button class="btn sm ghost" data-close>Закрыть</button></span></div>
+  <div class="helpg">
+    <section><h3>Телефон и планшет</h3><dl>
+      <dt>Два пальца</dt><dd>масштаб и сдвиг холста</dd>
+      <dt>Двойной тап по линии</dt><dd>новая точка</dd>
+      <dt>Двойной тап по точке</dt><dd>выделить весь контур</dd>
+      <dt>Долгое нажатие на точку</dt><dd>угол ↔ гладкая</dd>
+      <dt>Кнопка с плюсом</dt><dd>добавлять точки к выделению</dd>
+      <dt>Кисть и стилус</dt><dd>толщина зависит от нажима</dd>
+      <dt>Свайп шторки вниз</dt><dd>закрыть панель</dd>
+      <dt>Тап двумя пальцами</dt><dd>отменить</dd>
+      <dt>Тап тремя пальцами</dt><dd>повторить</dd>
+      <dt>Свайп по глифу в деструкции</dt><dd>следующий или предыдущий глиф</dd>
+      <dt>Перетаскивание точки</dt><dd>лупа показывает место под пальцем</dd>
+    </dl></section>
+    <section><h3>Клавиатура</h3><dl>
+      <dt>V P B X R E M H</dt><dd>выделение, перо, кисть, ластик, прямоугольник, эллипс, линейка, рука</dd>
+      <dt>Пробел + тянуть</dt><dd>двигать холст</dd>
+      <dt>Ctrl+Z / Ctrl+Shift+Z</dt><dd>отменить / повторить</dd>
+      <dt>Ctrl+A, C, X, V</dt><dd>выделить всё, копировать, вырезать, вставить</dd>
+      <dt>Стрелки (+Shift)</dt><dd>сдвиг на 1 (10)</dd>
+      <dt>[ ]</dt><dd>предыдущий / следующий глиф</dd>
+      <dt>F</dt><dd>вписать глиф</dd>
+      <dt>Ctrl+D</dt><dd>дублировать выделенные контуры</dd>
+      <dt>K</dt><dd>нож: разрезать контуры линией</dd>
+      <dt>Shift при перетаскивании</dt><dd>привязка к углу 15°, 45° или 90°</dd>
+      <dt>[ ] в кернинге</dt><dd>предыдущая / следующая пара строки</dd>
+      <dt>Alt+клик</dt><dd>угол ↔ гладкая</dd>
+      <dt>← → в кернинге</dt><dd>±10, с Shift ±1</dd>
+      <dt>R в деструкции</dt><dd>случайные эффекты</dd>
+      <dt>?</dt><dd>эта справка</dd>
+    </dl></section>
+  </div>
+  <div class="credits" id="credHelp"><span class="cby">Kernage · <span>сделал</span> <a href="https://github.com/gexhaw" target="_blank" rel="noopener">gexhaw</a></span><a class="btn sm" href="https://github.com/gexhaw/kernage" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true" style="fill:currentColor;stroke:none"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a><a class="btn sm" href="https://www.instagram.com/gexhaw/" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="4"/><circle cx="10" cy="10" r="3.2"/><circle cx="14.2" cy="5.8" r=".6" style="fill:currentColor"/></svg><span>Instagram</span></a></div>
+</div></div>
+
+<script>window.__bootErr=[];window.addEventListener("error",function(e){var m=(e.message||"error")+(e.lineno?" @"+e.lineno+":"+e.colno:"");window.__bootErr.push(m);var b=document.getElementById("booterr");if(b&&document.getElementById("bootwarn"))b.textContent=window.__bootErr.slice(0,3).join("\n");else if(window.__showErr)window.__showErr(m)});window.addEventListener("unhandledrejection",function(e){var m=String(e.reason&&e.reason.message||e.reason);if(window.__showErr)window.__showErr(m)});</script>
+<script>/*OTLIB*/</script>
+<script>/*PCLIB*/</script>
+<script>
+/*CORE*/
+</script>
+<script>
+/*CORE2*/
+</script>
+<script>
+/*CORE3*/
+</script>
+<script>
+/*CORE4*/
+/*BROTLI*/
+/*CORE5*/
+</script>
+<script>
+/*FX*/
+</script>
+<script>
+/*I18N*/
+</script>
+<script>
+/*TOUR*/
+</script>
+<script>
+/*APP*/
+</script>
